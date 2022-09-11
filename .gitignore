@@ -135,3 +135,5 @@ pgadmin
 
 .sonarqube/*
 sonarqube
+
+.idea/
