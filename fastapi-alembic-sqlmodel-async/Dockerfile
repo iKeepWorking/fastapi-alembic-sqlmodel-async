@@ -2,7 +2,13 @@ FROM tiangolo/uvicorn-gunicorn-fastapi:latest
 ENV PYTHONUNBUFFERED=1
 WORKDIR /code
 # Install Poetry
+RUN echo "deb https://mirrors.tuna.tsinghua.edu.cn/debian/ bullseye main contrib non-free" > /etc/apt/sources.list && \
+echo "deb https://mirrors.tuna.tsinghua.edu.cn/debian/ bullseye-updates main contrib non-free" >> /etc/apt/sources.list  && \
+echo "deb https://mirrors.tuna.tsinghua.edu.cn/debian/ bullseye-backports main contrib non-free" >> /etc/apt/sources.list  && \
+echo "deb https://mirrors.tuna.tsinghua.edu.cn/debian-security bullseye-security main contrib non-free" >> /etc/apt/sources.list
 RUN apt clean && apt update && apt install libsndfile1 -y
+RUN python3 -m pip install --upgrade pip
+RUN pip3 config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple
 RUN curl -sSL https://install.python-poetry.org | POETRY_HOME=/opt/poetry python && \
     cd /usr/local/bin && \
     ln -s /opt/poetry/bin/poetry && \
