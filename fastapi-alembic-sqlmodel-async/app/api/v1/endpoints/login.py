@@ -17,6 +17,8 @@ router = APIRouter()
 
 @router.post("", response_model=IPostResponseBase[Token], status_code=201)
 async def login(
+    # Setting the default value as Ellipsis(...) makes the parameter required in FastAPI.
+    # Ref:https://pakstech.com/blog/python-ellipsis/
     email: EmailStr = Body(...),
     password: str = Body(...),
     meta_data: IMetaGeneral = Depends(deps.get_general_meta),
@@ -83,6 +85,10 @@ async def get_refresh_token(
 
 @router.post("/access-token", response_model=TokenRead)
 async def login_access_token(
+    # You declare the dependency as the type of the parameter, and you use Depends() as its "default" value
+    # (that after the =) for that function's parameter, without any parameter in Depends(), instead of
+    # having to write the full class again inside of Depends(CommonQueryParams).
+    # ref: https://fastapi.tiangolo.com/tutorial/dependencies/classes-as-dependencies/
     form_data: OAuth2PasswordRequestForm = Depends(),
 ) -> Any:
     """
