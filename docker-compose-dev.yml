@@ -76,7 +76,7 @@ services:
     command:
       - "--providers.docker=true"
     ports:
-      - "80:80"
+      - "8000:80"
     depends_on:      
       - fastapi_server
     volumes:
