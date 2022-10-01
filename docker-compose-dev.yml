@@ -25,7 +25,7 @@ services:
       - traefik.http.services.fastapi_localservice.loadbalancer.server.port=8000
   
   database:
-    image: postgres:latest
+    image: postgres:14
     restart: always
     container_name: database
     env_file: ".env"
@@ -44,7 +44,7 @@ services:
       
   redis_server:
     container_name: redis_server
-    image: "redis:latest"
+    image: "redis:7"
     restart: always
     expose:
       - "6379"
@@ -72,7 +72,7 @@ services:
   traefik-proxy:
     container_name: traefik-proxy
     restart: always
-    image: "traefik:latest"
+    image: "traefik:2.8"
     command:
       - "--providers.docker=true"
     ports:
