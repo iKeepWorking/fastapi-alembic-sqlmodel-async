@@ -16,7 +16,7 @@ DataType = TypeVar("DataType")
 # ref: https://pydantic-docs.helpmanual.io/usage/models/#generic-models
 class IResponseBase(GenericModel, Generic[DataType]):
     message: str = ""
-    meta: dict = {}
+    meta: Dict = {}
     data: Union[DataType, Page] = None
 
 # To inherit from a GenericModel without replacing the TypeVar instance,
@@ -39,7 +39,7 @@ class IDeleteResponseBase(IResponseBase[DataType], Generic[DataType]):
 
 
 def create_response(
-    data: Union[DataType, Page], message: Optional[str] = None, meta: Optional[dict] = None
+    data: Union[DataType, Page], message: Optional[str] = None, meta: Optional[Dict] = None
 ) -> Dict[str, DataType]:
     new_data = dict(data) if isinstance(data, Page) else data
     body_response = {"data": new_data, "message": message, "meta": meta}
@@ -53,3 +53,8 @@ class IMetaGeneral(BaseModel):
 class IOrderEnum(str, Enum):
     ascendent = "ascendent"
     descendent = "descendent"
+
+
+class TokenType(str, Enum):
+    ACCESS = "access_token"
+    REFRESH = "refresh_token"

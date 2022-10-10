@@ -1,37 +1,36 @@
+from pydantic import BaseModel, ValidationError, root_validator
 from app.models.user_model import UserBase
 from app.models.group_model import GroupBase
-from pydantic import BaseModel, EmailStr
+from .media_schema import IImageMediaRead
 from .role_schema import IRoleRead
 from typing import Optional, List
 from uuid import UUID
 from enum import Enum
 
-class IUserCreate(BaseModel):
-    first_name: Optional[str]
-    last_name: Optional[str]
-    password : Optional[str]
-    email: EmailStr
-    is_superuser: bool = False
-    role_id: Optional[UUID]
-        
+
+class IUserCreate(UserBase):    
+    password: Optional[str]
+    class Config:
+        hashed_password = 'Main'
+
+class IUserUpdate(UserBase):
+    pass
+
+# This schema is used to avoid circular import
+class IGroupReadBasic(GroupBase):
+    id: UUID
+
+class IUserRead(UserBase):
+    id: UUID
+    role: Optional[IRoleRead] = None
+    groups: Optional[List[IGroupReadBasic]] = []
+    image: Optional[IImageMediaRead]
+
 class IUserReadWithoutGroups(UserBase):
     id: UUID
     role: Optional[IRoleRead] = None
-
-
-class IGroupRead(GroupBase):
-    id: UUID
-    
-class IUserRead(UserBase):
-    id: UUID    
-    role: Optional[IRoleRead] = None
-    groups: List[IGroupRead] = []
-
-class IUserUpdate(BaseModel):
-    id : int
-    email : EmailStr
-    is_active : bool = True
+    image: Optional[IImageMediaRead]
 
 class IUserStatus(str, Enum):
-    active = 'active'
-    inactive = 'inactive'
+    active = "active"
+    inactive = "inactive"

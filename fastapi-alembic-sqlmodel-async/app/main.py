@@ -1,5 +1,6 @@
 import uvicorn
 from fastapi import FastAPI
+from app.api.deps import get_redis_client
 from fastapi_pagination import add_pagination
 from starlette.middleware.cors import CORSMiddleware
 from app.api.v1.api import api_router as api_router_v1
@@ -9,7 +10,6 @@ from sqlmodel import text
 from fastapi_cache import FastAPICache
 from fastapi_cache.backends.redis import RedisBackend
 from fastapi_async_sqlalchemy import SQLAlchemyMiddleware
-import aioredis
 
 # Core Application Instance
 app = FastAPI(
@@ -29,7 +29,7 @@ app.add_middleware(
     },
 )
 
-# Set all CORS origins enabled 
+# Set all CORS origins enabled
 if settings.BACKEND_CORS_ORIGINS:
     app.add_middleware(
         CORSMiddleware,
@@ -45,6 +45,18 @@ async def add_postgresql_extension() -> None:
         query = text("CREATE EXTENSION IF NOT EXISTS pg_trgm")
         return await db.session.execute(query)
 
+
+class CustomException(Exception):
+    http_code: int
+    code: str
+    message: str
+
+    def __init__(self, http_code: int = None, code: str = None, message: str = None):
+        self.http_code = http_code if http_code else 500
+        self.code = code if code else str(self.http_code)
+        self.message = message
+
+
 @app.get("/")
 async def root():
     return {"message": "Hello World"}
@@ -53,13 +65,10 @@ async def root():
 @app.on_event("startup")
 async def on_startup():
     await add_postgresql_extension()
-    redis = aioredis.from_url(
-        f"redis://{settings.REDIS_HOST}:{settings.REDIS_PORT}",
-        encoding="utf8",
-        decode_responses=True,
-    )
-    FastAPICache.init(RedisBackend(redis), prefix="fastapi-cache")
+    redis_client = await get_redis_client()
+    FastAPICache.init(RedisBackend(redis_client), prefix="fastapi-cache")
     print("startup fastapi")
+
 
 # Add Routers
 app.include_router(api_router_v1, prefix=settings.API_V1_STR)
