@@ -17,17 +17,19 @@ services:
       - "8000"
     env_file: ".env"
     depends_on:
-      - database
+      - database_server
+    links:
+      - traefik:storage.localhost
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.fastapi_local.entrypoints=web"
       - "traefik.http.routers.fastapi_local.rule=Host(`fastapi.${LOCAL_1}`, `fastapi.${LOCAL_2}`, `fastapi.${EXT_ENDPOINT1}`)"
       - traefik.http.services.fastapi_localservice.loadbalancer.server.port=8000
   
-  database:
+  database_server:
     image: postgres:14
     restart: always
-    container_name: database
+    container_name: database_server
     env_file: ".env"
     user: root
     volumes:
@@ -50,8 +52,8 @@ services:
       - "6379"
     env_file: .env
 
-  nginx:
-    container_name: nginx
+  nginx_server:
+    container_name: nginx_server
     restart: unless-stopped
     logging:
       driver: none
@@ -93,21 +95,19 @@ services:
       - traefik.http.routers.minio-console.rule=Host(`stash.${LOCAL_1}`, `stash.${LOCAL_2}`, `stash.${EXT_ENDPOINT1}`)
       - traefik.http.services.minio-console.loadbalancer.server.port=9090
 
-  traefik-proxy:
-    container_name: traefik-proxy
+  traefik:
+    container_name: traefik
     restart: always
     image: "traefik:2.8"
     command:
       - "--providers.docker=true"
     ports:
-      - "8000:80"
-    depends_on:      
-      - fastapi_server
+      - "80:80"
     volumes:
       - "/var/run/docker.sock:/var/run/docker.sock:ro"
       - ./traefik/traefik.yml:/traefik.yml:ro
       - ./traefik/.htpasswd:/.htpasswd
-      - "${EB_LOG_BASE_DIR:-./traefik}/traefik-proxy:/logs"
+      - "${EB_LOG_BASE_DIR:-./traefik}/traefik:/logs"
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.dashboard.rule=Host(`traefik.${LOCAL_1}`, `traefik.${LOCAL_2}`, `traefik.${EXT_ENDPOINT1}`)"
