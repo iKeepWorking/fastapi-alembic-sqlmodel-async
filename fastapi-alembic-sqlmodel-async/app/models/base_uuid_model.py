@@ -1,8 +1,9 @@
 from typing import Optional
-import uuid as uuid_pkg
+from app.utils.uuid6 import uuid7, UUID
 from sqlmodel import SQLModel as _SQLModel, Field
 from sqlalchemy.orm import declared_attr
 from datetime import datetime
+#id: implements proposal uuid7 draft4
 
 class SQLModel(_SQLModel):
     @declared_attr  # type: ignore
@@ -10,19 +11,11 @@ class SQLModel(_SQLModel):
         return cls.__name__
 
 class BaseUUIDModel(SQLModel):
-    id: uuid_pkg.UUID = Field(
-        default_factory=uuid_pkg.uuid4,
+    id: UUID = Field(
+        default_factory=uuid7,
         primary_key=True,
         index=True,
         nullable=False,
     )
-    updated_at: Optional[datetime] = datetime.utcnow()
-    created_at: Optional[datetime] = datetime.utcnow()
-
-class BaseJoinUUIDModel(SQLModel):
-    id: uuid_pkg.UUID = Field(
-        default_factory=uuid_pkg.uuid4,
-        primary_key=True,
-        index=True,
-        nullable=False,
-    )
+    updated_at: Optional[datetime] = Field(default=datetime.now())
+    created_at: Optional[datetime] = Field(default=datetime.now())

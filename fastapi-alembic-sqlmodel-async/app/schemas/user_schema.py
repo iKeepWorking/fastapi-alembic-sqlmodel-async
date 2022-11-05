@@ -1,4 +1,4 @@
-from pydantic import BaseModel, ValidationError, root_validator
+from app.utils.partial import optional
 from app.models.user_model import UserBase
 from app.models.group_model import GroupBase
 from .media_schema import IImageMediaRead
@@ -13,6 +13,8 @@ class IUserCreate(UserBase):
     class Config:
         hashed_password = 'Main'
 
+#All these fields are optional
+@optional
 class IUserUpdate(UserBase):
     pass
 
@@ -25,11 +27,15 @@ class IUserRead(UserBase):
     role: Optional[IRoleRead] = None
     groups: Optional[List[IGroupReadBasic]] = []
     image: Optional[IImageMediaRead]
+    follower_count: Optional[int] = 0
+    following_count: Optional[int] = 0
 
 class IUserReadWithoutGroups(UserBase):
     id: UUID
     role: Optional[IRoleRead] = None
     image: Optional[IImageMediaRead]
+    follower_count: Optional[int] = 0
+    following_count: Optional[int] = 0
 
 class IUserStatus(str, Enum):
     active = "active"

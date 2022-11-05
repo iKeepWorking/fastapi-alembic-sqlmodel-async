@@ -1,6 +1,7 @@
 from datetime import datetime
 from typing import Any, Dict, Generic, List, Optional, Type, TypeVar, Union
 from uuid import UUID
+from app.schemas.common_schema import IOrderEnum
 from fastapi_pagination.ext.async_sqlalchemy import paginate
 from fastapi_async_sqlalchemy import db
 from fastapi_pagination import Params, Page
@@ -61,10 +62,14 @@ class CRUDBase(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
         *,
         skip: int = 0,
         limit: int = 100,
+        query: Optional[Union[T, Select[T]]] = None,
         db_session: Optional[AsyncSession] = None,
     ) -> List[ModelType]:
         db_session = db_session or db.session
-        query = select(self.model).offset(skip).limit(limit).order_by(self.model.id)
+        if query == None:
+            query = select(self.model).offset(skip).limit(limit).order_by(
+                self.model.id
+            )
         response = await db_session.execute(query)
         return response.scalars().all()
 
@@ -79,6 +84,64 @@ class CRUDBase(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
         if query == None:
             query = select(self.model)
         return await paginate(db_session, query, params)
+
+    async def get_multi_paginated_ordered(
+        self,
+        *,
+        params: Optional[Params] = Params(),
+        order_by: Optional[str] = None,
+        order: Optional[IOrderEnum] = IOrderEnum.ascendent,
+        query: Optional[Union[T, Select[T]]] = None,
+        db_session: Optional[AsyncSession] = None,
+    ) -> Page[ModelType]:
+        db_session = db_session or db.session
+
+        columns = self.model.__table__.columns
+
+        if order_by not in columns or order_by == None:
+            order_by = self.model.id
+
+        if query == None:
+            if order == IOrderEnum.ascendent:
+                query = select(self.model).order_by(columns[order_by.value].asc())
+            else:
+                query = select(self.model).order_by(columns[order_by.value].desc())
+
+        return await paginate(db_session, query, params)
+
+    async def get_multi_ordered(
+        self,
+        *,
+        order_by: Optional[str] = None,
+        order: Optional[IOrderEnum] = IOrderEnum.ascendent,
+        skip: int = 0,
+        limit: int = 100,
+        db_session: Optional[AsyncSession] = None,
+    ) -> List[ModelType]:
+        db_session = db_session or db.session
+
+        columns = self.model.__table__.columns
+
+        if order_by not in columns or order_by == None:
+            order_by = self.model.id
+
+        if order == IOrderEnum.ascendent:
+            query = (
+                select(self.model)
+                .offset(skip)
+                .limit(limit)
+                .order_by(columns[order_by.value].asc())
+            )
+        else:
+            query = (
+                select(self.model)
+                .offset(skip)
+                .limit(limit)
+                .order_by(columns[order_by.value].desc())
+            )
+
+        response = await db_session.execute(query)
+        return response.scalars().all()
 
     async def create(
         self,
